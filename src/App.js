@@ -9,7 +9,44 @@ function App() {
   const [fileSelected, setFileSelected] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    processImage(file);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+
+    const file = event.dataTransfer.files[0];
+    processImage(file);
+  };
+
+  const processImage = (file) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result);
+    };
   
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  }
+  
+
   const handleChange = (e) => {
     setFileSelected(e.target.value)
   }
@@ -46,14 +83,37 @@ function App() {
   const Analyze = () => {
     return (
     <div>
-      <h1>Analyze image</h1>
+      <h1>Analyze image 1</h1>
       {!processing &&
         <div>
+          <div
+            className={`dropzone ${dragOver ? 'drag-over' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+              id="file-input"
+            />
+            <label htmlFor="file-input">Drag and drop an image or click here to select</label>
+          </div>
           <div>
             <label>URL</label>
             <input type="text" placeholder="Enter URL or leave empty for random image from collection" size="50" onChange={handleChange}></input>
           </div>
           <button onClick={onFileUrlEntered}>Analyze</button>
+          <div>
+          {selectedImage && (
+              <div>
+                <h2>Selected Image:</h2>
+                <img src={selectedImage} alt="Selected" style={{ maxWidth: '300px' }} />
+              </div>
+            )}
+          </div>
         </div>
       }
       {processing && <div>Processing</div>}
@@ -62,7 +122,7 @@ function App() {
       </div>
     )
   }
-  
+
   const CantAnalyze = () => {
     return (
       <div>Key and/or endpoint not configured in ./azure-cognitiveservices-computervision.js</div>
@@ -70,7 +130,9 @@ function App() {
   }
   
   function Render() {
-    const ready = ComputerVisionIsConfigured();
+    // const ready = ComputerVisionIsConfigured();
+    const ready = true;
+
     if (ready) {
       return <Analyze />;
     }
